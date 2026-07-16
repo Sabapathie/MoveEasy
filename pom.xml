@@ -36,10 +36,11 @@
 
         <!-- PostgreSQL Driver (for Render) -->
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+</dependency>
+        
+
 
         <!-- Validation -->
         <dependency>
