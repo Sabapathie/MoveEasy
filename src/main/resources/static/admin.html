@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MoveEasy Admin Panel</title>
+  <link rel="icon" type="image/icon" href="./box-seam.svg">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --sidebar-w: 240px;
+      --brand: #0d6efd;
+      --brand-dark: #0a58ca;
+      --sidebar-bg: #0f172a;
+      --sidebar-text: #94a3b8;
+      --sidebar-active: #1e293b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+    }
+
+    /* ── Login Screen ── */
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+    }
+    .login-card {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .login-logo h2 { font-weight: 700; color: #0f172a; margin: 8px 0 4px; }
+    .login-logo p  { color: #64748b; font-size: 13px; margin: 0; }
+
+    /* ── Layout ── */
+    #appShell { display: none; min-height: 100vh; }
+
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      overflow-y: auto;
+    }
+
+    .sidebar-brand {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-brand span {
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .sidebar-section {
+      padding: 16px 12px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #475569;
+      text-transform: uppercase;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      margin: 2px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--sidebar-text);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+    .nav-item:hover { background: #1e293b; color: white; }
+    .nav-item.active { background: var(--brand); color: white; }
+    .nav-item .badge-count {
+      margin-left: auto;
+      background: #ef4444;
+      color: white;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 99px;
+      font-weight: 700;
+    }
+    .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px;
+      border-top: 1px solid #1e293b;
+    }
+
+    /* ── Main ── */
+    .main-content {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar h5 { margin: 0; font-weight: 700; color: #0f172a; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+    .content-area { padding: 28px; }
+
+    /* ── Stat cards ── */
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px 24px;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .stat-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .stat-card h3 { font-size: 28px; font-weight: 800; margin: 0; color: #0f172a; }
+    .stat-card p  { font-size: 13px; color: #64748b; margin: 0; }
+
+    /* ── Section panels ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── Table ── */
+    .data-card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+    .data-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .data-card-header h6 { margin: 0; font-weight: 700; color: #0f172a; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background: #f8fafc;
+      padding: 10px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: #64748b;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #374151;
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+
+    .badge-status {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-weight: 600;
+    }
+    .s-PENDING     { background: #fef3c7; color: #92400e; }
+    .s-CONFIRMED   { background: #dbeafe; color: #1e40af; }
+    .s-IN_PROGRESS { background: #ede9fe; color: #5b21b6; }
+    .s-COMPLETED   { background: #d1fae5; color: #065f46; }
+    .s-CANCELLED   { background: #fee2e2; color: #991b1b; }
+    .s-NEW         { background: #fef3c7; color: #92400e; }
+    .s-RESPONDED   { background: #dbeafe; color: #1e40af; }
+    .s-CONVERTED   { background: #d1fae5; color: #065f46; }
+    .s-CLOSED      { background: #f1f5f9; color: #64748b; }
+
+    .action-btn {
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: background 0.15s;
+    }
+    .action-btn:hover { background: #f1f5f9; }
+
+    /* ── Loading / Empty ── */
+    .loading-row td {
+      text-align: center;
+      padding: 40px;
+      color: #94a3b8;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: #94a3b8;
+    }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+
+    /* ── Modal detail ── */
+    .detail-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+    .detail-label { color: #64748b; min-width: 120px; font-weight: 500; }
+    .detail-value { color: #0f172a; }
+
+    /* ── Toast ── */
+    #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast-msg {
+      background: #0f172a; color: white;
+      padding: 10px 16px; border-radius: 8px;
+      font-size: 13px; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      animation: slideIn 0.2s ease;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    .search-box {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 13px;
+      outline: none;
+      width: 220px;
+    }
+    .search-box:focus { border-color: var(--brand); }
+
+    select.filter-select {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+      outline: none;
+      background: white;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Toast -->
+<div id="toast-container"></div>
+
+<!-- ══════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div style="font-size:36px;">📦</div>
+      <h2>MoveEasy Admin</h2>
+      <p>Sign in to manage your business</p>
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold" style="font-size:13px;">Username</label>
+      <input type="text" class="form-control" id="loginUser" placeholder="admin" value="admin">
+    </div>
+    <div class="mb-4">
+      <label class="form-label fw-semibold" style="font-size:13px;">Password</label>
+      <input type="password" class="form-control" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary w-100 fw-semibold" onclick="doLogin()">Sign In</button>
+    <p class="text-center text-muted mt-3 mb-0" style="font-size:12px;">
+      Default: admin / admin123
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     APP SHELL
+══════════════════════════════════════════ -->
+<div id="appShell">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <span style="font-size:24px;">📦</span>
+      <span>MoveEasy</span>
+    </div>
+
+    <div class="sidebar-section">Main</div>
+    <a class="nav-item active" onclick="showPanel('dashboard')" id="nav-dashboard">
+      <span class="icon">📊</span> Dashboard
+    </a>
+
+    <div class="sidebar-section">Manage</div>
+    <a class="nav-item" onclick="showPanel('bookings')" id="nav-bookings">
+      <span class="icon">📅</span> Bookings
+      <span class="badge-count" id="badge-bookings"></span>
+    </a>
+    <a class="nav-item" onclick="showPanel('quotes')" id="nav-quotes">
+      <span class="icon">💬</span> Quotes
+      <span class="badge-count" id="badge-quotes"></span>
+    </a>
+    <a class="nav-item" onclick="showPanel('messages')" id="nav-messages">
+      <span class="icon">✉️</span> Messages
+      <span class="badge-count" id="badge-messages"></span>
+    </a>
+
+    <div class="sidebar-footer">
+      <a class="nav-item" href="./index.html" style="margin:0;">
+        <span class="icon">🌐</span> View Website
+      </a>
+      <a class="nav-item" onclick="doLogout()" style="margin:0;margin-top:4px;">
+        <span class="icon">🚪</span> Logout
+      </a>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <h5 id="pageTitle">Dashboard</h5>
+      <div class="topbar-right">
+        <span style="font-size:13px;color:#64748b;">Welcome, <strong>Admin</strong></span>
+        <button class="btn btn-sm btn-outline-secondary" onclick="refreshAll()">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- ── DASHBOARD ── -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#dbeafe;">📅</div>
+              <div>
+                <h3 id="stat-bookings">—</h3>
+                <p>Total Bookings</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#fef3c7;">⏳</div>
+              <div>
+                <h3 id="stat-pending">—</h3>
+                <p>Pending Bookings</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#d1fae5;">💬</div>
+              <div>
+                <h3 id="stat-quotes">—</h3>
+                <p>Quote Requests</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#ede9fe;">✉️</div>
+              <div>
+                <h3 id="stat-messages">—</h3>
+                <p>Unread Messages</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent bookings -->
+        <div class="data-card">
+          <div class="data-card-header">
+            <h6>Recent Bookings</h6>
+            <button class="btn btn-sm btn-outline-primary" onclick="showPanel('bookings')">View All</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>#ID</th><th>Name</th><th>Service</th><th>Date</th><th>Branch</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-bookings-body">
+              <tr class="loading-row"><td colspan="6">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Recent quotes -->
+        <div class="data-card" style="margin-top:20px;">
+          <div class="data-card-header">
+            <h6>New Quote Requests</h6>
+            <button class="btn btn-sm btn-outline-primary" onclick="showPanel('quotes')">View All</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>#ID</th><th>Name</th><th>From</th><th>To</th><th>Service</th><th>Status</th></tr>
+            </thead>
+            <tbody id="recent-quotes-body">
+              <tr class="loading-row"><td colspan="6">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── BOOKINGS ── -->
+      <div class="panel" id="panel-bookings">
+        <div class="data-card">
+          <div class="data-card-header">
+            <h6>All Bookings</h6>
+            <div class="d-flex gap-2">
+              <input type="text" class="search-box" id="bookingSearch" placeholder="Search name or email..." oninput="filterBookings()">
+              <select class="filter-select" id="bookingStatusFilter" onchange="filterBookings()">
+                <option value="">All Status</option>
+                <option value="PENDING">Pending</option>
+                <option value="CONFIRMED">Confirmed</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>#ID</th><th>Name</th><th>Email</th><th>Phone</th>
+                  <th>Service</th><th>Moving Date</th><th>Branch</th>
+                  <th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="bookings-body">
+                <tr class="loading-row"><td colspan="9">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── QUOTES ── -->
+      <div class="panel" id="panel-quotes">
+        <div class="data-card">
+          <div class="data-card-header">
+            <h6>Quote Requests</h6>
+            <div class="d-flex gap-2">
+              <input type="text" class="search-box" id="quoteSearch" placeholder="Search name or email..." oninput="filterQuotes()">
+              <select class="filter-select" id="quoteStatusFilter" onchange="filterQuotes()">
+                <option value="">All Status</option>
+                <option value="NEW">New</option>
+                <option value="RESPONDED">Responded</option>
+                <option value="CONVERTED">Converted</option>
+                <option value="CLOSED">Closed</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>#ID</th><th>Name</th><th>Email</th><th>Phone</th>
+                  <th>From</th><th>To</th><th>Service</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="quotes-body">
+                <tr class="loading-row"><td colspan="9">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MESSAGES ── -->
+      <div class="panel" id="panel-messages">
+        <div class="data-card">
+          <div class="data-card-header">
+            <h6>Contact Messages</h6>
+            <div class="d-flex gap-2">
+              <input type="text" class="search-box" id="msgSearch" placeholder="Search name or subject..." oninput="filterMessages()">
+              <select class="filter-select" id="msgFilter" onchange="filterMessages()">
+                <option value="">All Messages</option>
+                <option value="unread">Unread Only</option>
+                <option value="BUSINESS_ENQUIRY">Business Enquiry</option>
+                <option value="CAREERS">Careers</option>
+                <option value="GENERAL">General</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>#ID</th><th>Name</th><th>Email</th><th>Type</th>
+                  <th>Subject</th><th>Date</th><th>Read</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="messages-body">
+                <tr class="loading-row"><td colspan="8">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Booking Detail Modal ── -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Booking Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="bookingModalBody"></div>
+      <div class="modal-footer">
+        <select class="form-select w-auto" id="bookingStatusSelect">
+          <option value="PENDING">Pending</option>
+          <option value="CONFIRMED">Confirmed</option>
+          <option value="IN_PROGRESS">In Progress</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+        <button class="btn btn-primary" onclick="updateBookingStatus()">Update Status</button>
+        <button class="btn btn-outline-danger" onclick="deleteBooking()">Delete</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Quote Detail Modal ── -->
+<div class="modal fade" id="quoteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Quote Request Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="quoteModalBody"></div>
+      <div class="modal-footer">
+        <select class="form-select w-auto" id="quoteStatusSelect">
+          <option value="NEW">New</option>
+          <option value="RESPONDED">Responded</option>
+          <option value="CONVERTED">Converted</option>
+          <option value="CLOSED">Closed</option>
+        </select>
+        <button class="btn btn-primary" onclick="updateQuoteStatus()">Update Status</button>
+        <button class="btn btn-outline-danger" onclick="deleteQuote()">Delete</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Message Detail Modal ── -->
+<div class="modal fade" id="messageModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Message Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="messageModalBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-success" onclick="markMessageRead()">Mark as Read</button>
+        <button class="btn btn-outline-danger" onclick="deleteMessage()">Delete</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // ── CONFIG ──────────────────────────────────────────────
+  const API_BASE = '/api';
+  const ADMIN_USER = 'admin';
+  const ADMIN_PASS = 'admin123';
+
+  // ── STATE ──────────────────────────────────────────────
+  let allBookings = [], allQuotes = [], allMessages = [];
+  let activeBookingId = null, activeQuoteId = null, activeMessageId = null;
+
+  // ── LOGIN ──────────────────────────────────────────────
+  function doLogin() {
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value.trim();
+    if (u === ADMIN_USER && p === ADMIN_PASS) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('appShell').style.display = 'flex';
+      loadAll();
+    } else {
+      showToast('❌ Wrong username or password', 'danger');
+    }
+  }
+
+  function doLogout() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('appShell').style.display = 'none';
+  }
+
+  // ── TOAST ──────────────────────────────────────────────
+  function showToast(msg, type = 'success') {
+    const c = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = 'toast-msg';
+    el.style.borderLeft = type === 'danger' ? '3px solid #ef4444' : '3px solid #22c55e';
+    el.textContent = msg;
+    c.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // ── PANEL SWITCHING ──────────────────────────────────────────────
+  function showPanel(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+    const titles = { dashboard: 'Dashboard', bookings: 'Bookings', quotes: 'Quote Requests', messages: 'Contact Messages' };
+    document.getElementById('pageTitle').textContent = titles[name] || name;
+  }
+
+  // ── LOAD ALL DATA ──────────────────────────────────────────────
+  async function loadAll() {
+    await Promise.all([loadBookings(), loadQuotes(), loadMessages()]);
+    updateDashboard();
+  }
+
+  function refreshAll() {
+    showToast('🔄 Refreshing data...');
+    loadAll();
+  }
+
+  // ── BOOKINGS ──────────────────────────────────────────────
+  async function loadBookings() {
+    try {
+      const res = await fetch(`${API_BASE}/bookings`);
+      allBookings = await res.json();
+      renderBookings(allBookings);
+      renderRecentBookings(allBookings.slice(0, 5));
+      const pending = allBookings.filter(b => b.status === 'PENDING').length;
+      const badge = document.getElementById('badge-bookings');
+      badge.textContent = pending || '';
+      badge.style.display = pending ? 'inline' : 'none';
+    } catch(e) {
+      document.getElementById('bookings-body').innerHTML = '<tr class="loading-row"><td colspan="9">Could not load bookings</td></tr>';
+    }
+  }
+
+  function renderBookings(list) {
+    const body = document.getElementById('bookings-body');
+    if (!list.length) { body.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="icon">📅</div><p>No bookings yet</p></div></td></tr>'; return; }
+    const svcLabel = { COURIER: 'Courier', HOUSE_SHIFTING: 'House Shifting', RENTAL_TRANSPORT: 'Rental Transport' };
+    body.innerHTML = list.map(b => `
+      <tr>
+        <td><strong>#${b.id}</strong></td>
+        <td>${b.fullName}</td>
+        <td><a href="mailto:${b.email}">${b.email}</a></td>
+        <td>${b.phone}</td>
+        <td>${svcLabel[b.serviceType] || b.serviceType}</td>
+        <td>${b.movingDate}</td>
+        <td>${b.branch || '—'}</td>
+        <td><span class="badge-status s-${b.status}">${b.status}</span></td>
+        <td>
+          <button class="action-btn" onclick="openBooking(${b.id})" title="View">👁️</button>
+          <button class="action-btn" onclick="quickDeleteBooking(${b.id})" title="Delete">🗑️</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  function renderRecentBookings(list) {
+    const body = document.getElementById('recent-bookings-body');
+    if (!list.length) { body.innerHTML = '<tr class="loading-row"><td colspan="6">No bookings yet</td></tr>'; return; }
+    const svcLabel = { COURIER: 'Courier', HOUSE_SHIFTING: 'House Shifting', RENTAL_TRANSPORT: 'Rental Transport' };
+    body.innerHTML = list.map(b => `
+      <tr>
+        <td><strong>#${b.id}</strong></td>
+        <td>${b.fullName}</td>
+        <td>${svcLabel[b.serviceType] || b.serviceType}</td>
+        <td>${b.movingDate}</td>
+        <td>${b.branch || '—'}</td>
+        <td><span class="badge-status s-${b.status}">${b.status}</span></td>
+      </tr>`).join('');
+  }
+
+  function filterBookings() {
+    const q = document.getElementById('bookingSearch').value.toLowerCase();
+    const s = document.getElementById('bookingStatusFilter').value;
+    renderBookings(allBookings.filter(b =>
+      (!q || b.fullName.toLowerCase().includes(q) || b.email.toLowerCase().includes(q)) &&
+      (!s || b.status === s)
+    ));
+  }
+
+  function openBooking(id) {
+    const b = allBookings.find(x => x.id === id);
+    if (!b) return;
+    activeBookingId = id;
+    const svcLabel = { COURIER: 'Courier Service', HOUSE_SHIFTING: 'House Shifting', RENTAL_TRANSPORT: 'Rental Transport' };
+    document.getElementById('bookingModalBody').innerHTML = `
+      <div class="detail-row"><span class="detail-label">Booking ID</span><span class="detail-value">#${b.id}</span></div>
+      <div class="detail-row"><span class="detail-label">Full Name</span><span class="detail-value">${b.fullName}</span></div>
+      <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value"><a href="mailto:${b.email}">${b.email}</a></span></div>
+      <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${b.phone}</span></div>
+      <hr>
+      <div class="detail-row"><span class="detail-label">Service</span><span class="detail-value">${svcLabel[b.serviceType] || b.serviceType}</span></div>
+      <div class="detail-row"><span class="detail-label">Branch</span><span class="detail-value">${b.branch || '—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Moving Date</span><span class="detail-value">${b.movingDate}</span></div>
+      <div class="detail-row"><span class="detail-label">Pickup</span><span class="detail-value">${b.pickupAddress}</span></div>
+      <div class="detail-row"><span class="detail-label">Delivery</span><span class="detail-value">${b.deliveryAddress}</span></div>
+      <div class="detail-row"><span class="detail-label">Notes</span><span class="detail-value">${b.additionalNotes || '—'}</span></div>
+      <hr>
+      <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge-status s-${b.status}">${b.status}</span></span></div>
+      <div class="detail-row"><span class="detail-label">Created</span><span class="detail-value">${new Date(b.createdAt).toLocaleString()}</span></div>`;
+    document.getElementById('bookingStatusSelect').value = b.status;
+    new bootstrap.Modal(document.getElementById('bookingModal')).show();
+  }
+
+  async function updateBookingStatus() {
+    const status = document.getElementById('bookingStatusSelect').value;
+    try {
+      const res = await fetch(`${API_BASE}/bookings/${activeBookingId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        showToast('✅ Booking status updated!');
+        bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+        loadBookings();
+      }
+    } catch(e) { showToast('❌ Failed to update', 'danger'); }
+  }
+
+  async function deleteBooking() {
+    if (!confirm('Delete this booking?')) return;
+    try {
+      await fetch(`${API_BASE}/bookings/${activeBookingId}`, { method: 'DELETE' });
+      showToast('🗑️ Booking deleted');
+      bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+      loadBookings();
+    } catch(e) { showToast('❌ Failed to delete', 'danger'); }
+  }
+
+  async function quickDeleteBooking(id) {
+    if (!confirm('Delete booking #' + id + '?')) return;
+    try {
+      await fetch(`${API_BASE}/bookings/${id}`, { method: 'DELETE' });
+      showToast('🗑️ Booking deleted');
+      loadBookings();
+    } catch(e) { showToast('❌ Failed to delete', 'danger'); }
+  }
+
+  // ── QUOTES ──────────────────────────────────────────────
+  async function loadQuotes() {
+    try {
+      const res = await fetch(`${API_BASE}/quotes`);
+      allQuotes = await res.json();
+      renderQuotes(allQuotes);
+      renderRecentQuotes(allQuotes.filter(q => q.status === 'NEW').slice(0, 5));
+      const newQ = allQuotes.filter(q => q.status === 'NEW').length;
+      const badge = document.getElementById('badge-quotes');
+      badge.textContent = newQ || '';
+      badge.style.display = newQ ? 'inline' : 'none';
+    } catch(e) {
+      document.getElementById('quotes-body').innerHTML = '<tr class="loading-row"><td colspan="9">Could not load quotes</td></tr>';
+    }
+  }
+
+  function renderQuotes(list) {
+    const body = document.getElementById('quotes-body');
+    if (!list.length) { body.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="icon">💬</div><p>No quote requests yet</p></div></td></tr>'; return; }
+    const svcLabel = { COURIER: 'Courier', HOUSE_SHIFTING: 'House Shifting', RENTAL_TRANSPORT: 'Rental Transport' };
+    body.innerHTML = list.map(q => `
+      <tr>
+        <td><strong>#${q.id}</strong></td>
+        <td>${q.name}</td>
+        <td><a href="mailto:${q.email}">${q.email}</a></td>
+        <td>${q.phone}</td>
+        <td>${q.fromLocation}</td>
+        <td>${q.toLocation}</td>
+        <td>${svcLabel[q.serviceType] || q.serviceType || '—'}</td>
+        <td><span class="badge-status s-${q.status}">${q.status}</span></td>
+        <td>
+          <button class="action-btn" onclick="openQuote(${q.id})" title="View">👁️</button>
+          <button class="action-btn" onclick="quickDeleteQuote(${q.id})" title="Delete">🗑️</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  function renderRecentQuotes(list) {
+    const body = document.getElementById('recent-quotes-body');
+    if (!list.length) { body.innerHTML = '<tr class="loading-row"><td colspan="6">No new quote requests</td></tr>'; return; }
+    const svcLabel = { COURIER: 'Courier', HOUSE_SHIFTING: 'House Shifting', RENTAL_TRANSPORT: 'Rental Transport' };
+    body.innerHTML = list.map(q => `
+      <tr>
+        <td><strong>#${q.id}</strong></td>
+        <td>${q.name}</td>
+        <td>${q.fromLocation}</td>
+        <td>${q.toLocation}</td>
+        <td>${svcLabel[q.serviceType] || '—'}</td>
+        <td><span class="badge-status s-${q.status}">${q.status}</span></td>
+      </tr>`).join('');
+  }
+
+  function filterQuotes() {
+    const q = document.getElementById('quoteSearch').value.toLowerCase();
+    const s = document.getElementById('quoteStatusFilter').value;
+    renderQuotes(allQuotes.filter(x =>
+      (!q || x.name.toLowerCase().includes(q) || x.email.toLowerCase().includes(q)) &&
+      (!s || x.status === s)
+    ));
+  }
+
+  function openQuote(id) {
+    const q = allQuotes.find(x => x.id === id);
+    if (!q) return;
+    activeQuoteId = id;
+    const svcLabel = { COURIER: 'Courier Service', HOUSE_SHIFTING: 'House Shifting', RENTAL_TRANSPORT: 'Rental Transport' };
+    document.getElementById('quoteModalBody').innerHTML = `
+      <div class="detail-row"><span class="detail-label">Quote ID</span><span class="detail-value">#${q.id}</span></div>
+      <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value">${q.name}</span></div>
+      <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value"><a href="mailto:${q.email}">${q.email}</a></span></div>
+      <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${q.phone}</span></div>
+      <hr>
+      <div class="detail-row"><span class="detail-label">Service</span><span class="detail-value">${svcLabel[q.serviceType] || q.serviceType || '—'}</span></div>
+      <div class="detail-row"><span class="detail-label">From</span><span class="detail-value">${q.fromLocation}</span></div>
+      <div class="detail-row"><span class="detail-label">To</span><span class="detail-value">${q.toLocation}</span></div>
+      <div class="detail-row"><span class="detail-label">Property Size</span><span class="detail-value">${q.propertySize || '—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Message</span><span class="detail-value">${q.message || '—'}</span></div>
+      <hr>
+      <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge-status s-${q.status}">${q.status}</span></span></div>
+      <div class="detail-row"><span class="detail-label">Submitted</span><span class="detail-value">${new Date(q.createdAt).toLocaleString()}</span></div>`;
+    document.getElementById('quoteStatusSelect').value = q.status;
+    new bootstrap.Modal(document.getElementById('quoteModal')).show();
+  }
+
+  async function updateQuoteStatus() {
+    const status = document.getElementById('quoteStatusSelect').value;
+    try {
+      const res = await fetch(`${API_BASE}/quotes/${activeQuoteId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        showToast('✅ Quote status updated!');
+        bootstrap.Modal.getInstance(document.getElementById('quoteModal')).hide();
+        loadQuotes();
+      }
+    } catch(e) { showToast('❌ Failed to update', 'danger'); }
+  }
+
+  async function deleteQuote() {
+    if (!confirm('Delete this quote request?')) return;
+    try {
+      await fetch(`${API_BASE}/quotes/${activeQuoteId}`, { method: 'DELETE' });
+      showToast('🗑️ Quote deleted');
+      bootstrap.Modal.getInstance(document.getElementById('quoteModal')).hide();
+      loadQuotes();
+    } catch(e) { showToast('❌ Failed to delete', 'danger'); }
+  }
+
+  async function quickDeleteQuote(id) {
+    if (!confirm('Delete quote #' + id + '?')) return;
+    try {
+      await fetch(`${API_BASE}/quotes/${id}`, { method: 'DELETE' });
+      showToast('🗑️ Quote deleted');
+      loadQuotes();
+    } catch(e) { showToast('❌ Failed to delete', 'danger'); }
+  }
+
+  // ── MESSAGES ──────────────────────────────────────────────
+  async function loadMessages() {
+    try {
+      const res = await fetch(`${API_BASE}/contact`);
+      allMessages = await res.json();
+      renderMessages(allMessages);
+      const unread = allMessages.filter(m => !m.read).length;
+      const badge = document.getElementById('badge-messages');
+      badge.textContent = unread || '';
+      badge.style.display = unread ? 'inline' : 'none';
+    } catch(e) {
+      document.getElementById('messages-body').innerHTML = '<tr class="loading-row"><td colspan="8">Could not load messages</td></tr>';
+    }
+  }
+
+  function renderMessages(list) {
+    const body = document.getElementById('messages-body');
+    if (!list.length) { body.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="icon">✉️</div><p>No messages yet</p></div></td></tr>'; return; }
+    body.innerHTML = list.map(m => `
+      <tr style="${!m.read ? 'font-weight:600;background:#fffbeb;' : ''}">
+        <td><strong>#${m.id}</strong></td>
+        <td>${m.name}</td>
+        <td><a href="mailto:${m.email}">${m.email}</a></td>
+        <td>${m.type || 'GENERAL'}</td>
+        <td>${m.subject}</td>
+        <td>${new Date(m.createdAt).toLocaleDateString()}</td>
+        <td>${m.read ? '✅' : '🔵 New'}</td>
+        <td>
+          <button class="action-btn" onclick="openMessage(${m.id})" title="View">👁️</button>
+          <button class="action-btn" onclick="quickDeleteMessage(${m.id})" title="Delete">🗑️</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  function filterMessages() {
+    const q = document.getElementById('msgSearch').value.toLowerCase();
+    const f = document.getElementById('msgFilter').value;
+    renderMessages(allMessages.filter(m =>
+      (!q || m.name.toLowerCase().includes(q) || m.subject.toLowerCase().includes(q)) &&
+      (f === '' || (f === 'unread' ? !m.read : m.type === f))
+    ));
+  }
+
+  function openMessage(id) {
+    const m = allMessages.find(x => x.id === id);
+    if (!m) return;
+    activeMessageId = id;
+    document.getElementById('messageModalBody').innerHTML = `
+      <div class="detail-row"><span class="detail-label">From</span><span class="detail-value">${m.name}</span></div>
+      <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value"><a href="mailto:${m.email}">${m.email}</a></span></div>
+      <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">${m.type || 'GENERAL'}</span></div>
+      <div class="detail-row"><span class="detail-label">Subject</span><span class="detail-value">${m.subject}</span></div>
+      <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${new Date(m.createdAt).toLocaleString()}</span></div>
+      <hr>
+      <p style="font-size:14px;color:#374151;line-height:1.7;">${m.message}</p>
+      <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${m.read ? '✅ Read' : '🔵 Unread'}</span></div>`;
+    new bootstrap.Modal(document.getElementById('messageModal')).show();
+    if (!m.read) markMsgRead(id);
+  }
+
+  async function markMsgRead(id) {
+    try {
+      await fetch(`${API_BASE}/contact/${id}/read`, { method: 'PATCH' });
+      loadMessages();
+    } catch(e) {}
+  }
+
+  async function markMessageRead() {
+    await markMsgRead(activeMessageId);
+    showToast('✅ Marked as read');
+    bootstrap.Modal.getInstance(document.getElementById('messageModal')).hide();
+  }
+
+  async function deleteMessage() {
+    if (!confirm('Delete this message?')) return;
+    try {
+      await fetch(`${API_BASE}/contact/${activeMessageId}`, { method: 'DELETE' });
+      showToast('🗑️ Message deleted');
+      bootstrap.Modal.getInstance(document.getElementById('messageModal')).hide();
+      loadMessages();
+    } catch(e) { showToast('❌ Failed to delete', 'danger'); }
+  }
+
+  async function quickDeleteMessage(id) {
+    if (!confirm('Delete this message?')) return;
+    try {
+      await fetch(`${API_BASE}/contact/${id}`, { method: 'DELETE' });
+      showToast('🗑️ Message deleted');
+      loadMessages();
+    } catch(e) { showToast('❌ Failed to delete', 'danger'); }
+  }
+
+  // ── DASHBOARD STATS ──────────────────────────────────────────────
+  function updateDashboard() {
+    
+	document.getElementById('stat-bookings').textContent = allBookings.length;
+    document.getElementById('stat-pending').textContent = allBookings.filter(b => b.status === 'PENDING').length;
+    document.getElementById('stat-quotes').textContent = allQuotes.filter(q => q.status === 'NEW').length;
+    document.getElementById('stat-messages').textContent = allMessages.filter(m => !m.read).length;
+    
+  }
+</script>
+</body>
+</html>
